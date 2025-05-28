@@ -6,3 +6,7 @@
 /database_data
 
 backend/node_modules/
+backend/.env
+backend/dist
+backend/build
+web-server.code-workspace

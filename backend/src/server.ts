@@ -1,4 +1,3 @@
-// src/server.ts
 import express, { Application, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -17,7 +16,7 @@ app.use(express.urlencoded({ extended: true })); // Para parsear URL-encoded dat
 
 // Rutas
 app.get('/', (req: Request, res: Response) => {
-  res.send('Video Streamer API está funcionando!');
+  res.send('¡Video Streamer API está funcionando!');
 });
 app.use('/api/videos', videoRoutes);
 
@@ -25,7 +24,7 @@ app.use('/api/videos', videoRoutes);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
-  res.status(500).send({ error: 'Algo salió mal!', message: err.message });
+  res.status(500).send({ error: 'Algo salió mal: ', message: err.message });
 });
 
 app.listen(PORT, () => {
