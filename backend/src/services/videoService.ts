@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const VIDEO_DIR = process.env.VIDEO_DIRECTORY_PATH || '/app/videos_mounted'; // Ruta dentro del contenedor
+// const VIDEO_DIR = process.env.VIDEO_DIRECTORY_PATH || '/app/videos_mounted'; // Ruta dentro del contenedor
+const VIDEO_DIR = '/home/sebastian/Vídeos/testing'; // Ruta dentro del contenedor
 const ALLOWED_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.webm']; // Agrega más si es necesario
 
 interface VideoFile {
