@@ -1,0 +1,38 @@
+# version: '3.8'
+
+services:  
+  # PostgreSQL Database Service
+  postgres_db:
+    image: postgres:15-alpine # Usa la imagen oficial de PostgreSQL versión 15, variante Alpine (más ligera)
+    container_name: web_server_db # Nombre personalizado para el contenedor
+    environment: # Variables de entorno para configurar el contenedor de PostgreSQL
+      POSTGRES_USER: ${POSTGRES_USER:-myvideouser} # Nombre de usuario para la DB
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword} # Contraseña para el usuario
+      POSTGRES_DB: ${POSTGRES_DB:-videostreamerdb} # Nombre de la base de datos a crear
+      # PGDATA: /var/lib/postgresql/data/pgdata # Opcional, si quieres cambiar la ruta de datos interna
+    volumes: # Define cómo se maneja el almacenamiento persistente y otros archivos
+      # Montaje de volumen para persistir los datos de PostgreSQL:
+      # - Lado izquierdo (./database_data): Ruta en tu máquina host (Ubuntu)
+      # - Lado derecho (/var/lib/postgresql/data): Ruta DENTRO del contenedor donde PostgreSQL guarda sus datos
+      - ./database_data:/var/lib/postgresql/data
+      # Montaje del script de inicialización:
+      # - Lado izquierdo (./scripts/db_init.sql): Tu script SQL en el host
+      # - Lado derecho (/docker-entrypoint-initdb.d/init.sql): Donde PostgreSQL lo buscará para ejecutarlo
+      - ./scripts/db_init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports: # Mapeo de puertos entre el host y el contenedor
+      # - Lado izquierdo ("5432"): Puerto en tu máquina host (Ubuntu)
+      # - Lado derecho ("5432"): Puerto DENTRO del contenedor donde PostgreSQL escucha
+      # Esto permite que aplicaciones en tu host (como tu backend corriendo localmente)
+      # se conecten a la base de datos del contenedor a través de localhost:5432
+      - "5432:5432"
+    restart: unless-stopped # Política de reinicio: el contenedor se reiniciará a menos que lo detengas explícitamente
+    healthcheck: # (Opcional pero recomendado) Define cómo Docker verifica si el servicio está saludable
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myvideouser} -d ${POSTGRES_DB:-videostreamerdb}"]
+      interval: 10s # Con qué frecuencia ejecutar la prueba
+      timeout: 5s   # Cuánto tiempo esperar por una respuesta
+      retries: 5    # Cuántas veces reintentar si falla
+
+# (Opcional) Definir un volumen nombrado gestionado por Docker
+# Si no usas un bind mount como './database_data', podrías definir un volumen así:
+# volumes:
+#   postgres_data_volume:

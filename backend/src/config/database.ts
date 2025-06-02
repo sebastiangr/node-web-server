@@ -2,40 +2,37 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') }); // Ajusta ruta si .env está en raíz del proyecto
+dotenv.config({ path: path.resolve(__dirname, '../../.env') }); // .env is in backend/
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 pool.on('connect', () => {
-  console.log('Conectado a PostgreSQL!');
+  console.log('Backend connected to PostgreSQL database successfully (Dockerized).');
 });
 
 pool.on('error', (err) => {
-  console.error('Error inesperado en cliente de la pool de PostgreSQL', err);
-  process.exit(-1);
+  console.error('Error connecting to PostgreSQL database.', err);
+  // process.exit(-1);
 });
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
 
-// Ejemplo de creación de tabla (ejecutar una vez o con migraciones)
-export const createVideosTable = async () => {
-  const createTableQuery = `
-  CREATE TABLE IF NOT EXISTS videos (
-    id SERIAL PRIMARY KEY,
-    filename VARCHAR(255) NOT NULL UNIQUE,
-    filepath TEXT NOT NULL,
-    size_bytes BIGINT,
-    mime_type VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    -- Futuros campos: duration_seconds INT, thumbnail_path TEXT, description TEXT
-  );
-  `;
+// Check DB Connection status
+export const checkDbConnection = async () => {
   try {
-    await pool.query(createTableQuery);
-    console.log("Tabla 'videos' verificada/creada exitosamente.");
+    await pool.query('SELECT NOW()'); // Simple query for testing purposes
+    console.log('Query PostgreSQL test succesful.');
+    
+    // Verify if the 'videos' table exists
+    const tableCheck = await pool.query("SELECT to_regclass('public.videos');");
+    if (tableCheck.rows[0].to_regclass) {
+      console.log("Table 'videos' exists in the database.");      
+    } else {
+      console.warn("Table 'videos' does NOT exist in the database. Check db_init.sql.");      
+    }    
   } catch (err) {
-    console.error("Error creando la tabla 'videos':", err);
+    console.error("Error checking database connection:", err);
   }
 };

@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import { checkDbConnection } from './config/database'; 
 import videoRoutes from './routes/videoRoutes';
 
 dotenv.config();
@@ -47,7 +48,8 @@ app.listen(Number(PORT), HOST, () => { // Añade HOST como segundo argumento
       }
     }
     if (localIp !== 'localhost') break; // Si ya encontramos una, salimos
-  }
-  console.log(`Backend server corriendo en http://${localIp}:${PORT} (accesible en la red local)`);
-  console.log(`También escuchando en http://localhost:${PORT}`);
+  }  
+  console.log(`Backend server running on: http://${localIp}:${PORT} (local network)`);
+  console.log(`Backend server running on: http://localhost:${PORT}`);
+  checkDbConnection(); // Llamar a la función de prueba
 });
