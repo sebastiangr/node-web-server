@@ -2,9 +2,11 @@ import fs from 'fs/promises';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 
-// const VIDEO_DIR = process.env.VIDEO_DIRECTORY_PATH || '/app/videos_mounted'; // Ruta dentro del contenedor
-const VIDEO_DIR = '/home/sebastian/Vídeos/testing'; // Ruta dentro del contenedor
+const VIDEO_DIR = process.env.VIDEO_DIRECTORY_PATH || '/app/videos_mounted'; // Ruta dentro del contenedor
+// const VIDEO_DIR = '/home/sebastian/Vídeos/testing'; // Ruta dentro del contenedor
 const ALLOWED_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.webm']; // Agrega más si es necesario
+
+console.log(`DEBUG: VIDEO_DIRECTORY_PATH en el contenedor es: ${process.env.VIDEO_DIRECTORY_PATH}`);
 
 export interface VideoMetadata {
   duration?: number; // Duración en segundos

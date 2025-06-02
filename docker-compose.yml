@@ -32,7 +32,45 @@ services:
       timeout: 5s   # Cuánto tiempo esperar por una respuesta
       retries: 5    # Cuántas veces reintentar si falla
 
-# (Opcional) Definir un volumen nombrado gestionado por Docker
-# Si no usas un bind mount como './database_data', podrías definir un volumen así:
-# volumes:
-#   postgres_data_volume:
+  # Node.js Backend Service
+  backend:
+    build: # Instrucciones para construir la imagen del backend
+      context: ./backend # Directorio donde se encuentra el Dockerfile del backend
+      dockerfile: Dockerfile # Nombre del Dockerfile (puede omitirse si es 'Dockerfile')
+    container_name: web_server_backend # Nombre personalizado para el contenedor del backend
+    ports: # Mapeo de puertos: <puerto_host>:<puerto_contenedor>
+      # Expone el puerto 3001 del contenedor al puerto 3001 del host
+      - "${BACKEND_HOST_PORT:-3001}:3001" 
+    volumes: # Montaje de volúmenes
+      # Monta tu carpeta de vídeos del host a la ruta DENTRO del contenedor
+      # que el backend espera (según VIDEO_DIRECTORY_PATH).
+      # ':ro' significa read-only, el contenedor no podrá modificar los vídeos originales.
+      - ./videos_to_serve:/app/videos_mounted:ro
+      # Para desarrollo: Monta el código fuente local en el contenedor.
+      # Esto permite que los cambios en tu código se reflejen sin reconstruir la imagen.
+      # PERO, ten cuidado con node_modules, es mejor excluirlo o manejarlo bien.
+      - ./backend/src:/app/src 
+      # - ./backend/package.json:/app/package.json # Si haces cambios frecuentes a deps
+      # - ./backend/package-lock.json:/app/package-lock.json
+      # Para evitar que los node_modules del host sobreescriban los del contenedor:
+      # - /app/node_modules # Define un volumen anónimo para node_modules DENTRO del contenedor
+    depends_on: # Define dependencias entre servicios
+      postgres_db: # El backend depende de la base de datos
+        condition: service_healthy # Espera a que postgres_db esté 'healthy' (según su healthcheck)
+                                   # antes de iniciar el backend.
+    environment: # Variables de entorno para el servicio backend
+      # NODE_ENV: development # o production (afecta cómo algunas librerías se comportan)
+      BACKEND_PORT: 3001 # Puerto en el que Node.js escuchará DENTRO del contenedor (debe coincidir con EXPOSE)
+      # Conexión a la base de datos DENTRO de la red Docker:
+      # Usamos el nombre del servicio 'postgres_db' como el host de la base de datos.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-myvideouser}:${POSTGRES_PASSWORD:-mysecretpassword}@postgres_db:5432/${POSTGRES_DB:-videostreamerdb}
+      VIDEO_DIRECTORY_PATH: /app/videos_mounted # Ruta DENTRO del contenedor donde están los vídeos
+      # (Opcional) Host para que escuche en todas las interfaces dentro del contenedor
+      HOST: '0.0.0.0' 
+    restart: unless-stopped
+    # (Opcional) Para desarrollo con hot-reloading dentro del contenedor:
+    # Si montas tu código fuente con un volumen (como arriba con ./backend/src:/app/src),
+    # puedes usar el comando de desarrollo de nodemon.
+    # El Dockerfile por defecto usa `CMD ["node", "dist/server.js"]` (para producción).
+    # Puedes sobreescribir el CMD aquí para desarrollo:
+    # command: npm run dev
