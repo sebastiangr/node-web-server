@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true })); // Para parsear URL-encoded dat
 
 // Rutas
 app.get('/', (req: Request, res: Response) => {
-  res.send('¡Video Streamer API está funcionando!');
+  res.send('Web-server: ¡Video Streamer API está funcionando!');
 });
 app.use('/api/videos', videoRoutes);
 

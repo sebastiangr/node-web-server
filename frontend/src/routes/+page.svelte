@@ -39,8 +39,12 @@
 </script>
 
 
-<div class="container">
-  <h1>Listado de Vídeos</h1>
+<div class="container">  
+
+  
+  <div class="text-center mb-6">    
+    <h1 class="text-3xl font-bold mb-4">Video Arxive</h1>    
+  </div>    
 
   <div class="search-bar">
     <input type="text" bind:value={searchTerm} placeholder="Buscar vídeos..." on:input={handleSearch} />

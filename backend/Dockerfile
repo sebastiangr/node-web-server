@@ -22,7 +22,7 @@ COPY . .
 RUN npm run build
 
 
-# ---- Etapa de Producción (Production Stage) ----
+# ---- Etapa de Producción (Production Stage) / Desarrollo con Hot-Reload ----
 # Empezamos desde una imagen base de Node.js limpia y ligera para producción.
 FROM node:18-alpine
 
@@ -36,17 +36,20 @@ COPY package*.json ./
 # Instalar SOLO las dependencias de PRODUCCIÓN
 # --omit=dev (o --production para versiones antiguas de npm)
 # --ignore-scripts: útil si tus dependencias tienen postinstall scripts que no necesitas en producción
-RUN npm install --omit=dev --ignore-scripts
+# RUN npm install --omit=dev --ignore-scripts
+RUN npm install --ignore-scripts
 
 # Copiar los artefactos de compilación (código JavaScript de la carpeta /app/dist)
 # desde la etapa 'builder' a la etapa actual.
-COPY --from=builder /app/dist ./dist
+# COPY --from=builder /app/dist ./dist
 
 # (Opcional pero recomendado) Copiar el archivo .env del backend.
 # Sin embargo, es MEJOR práctica pasar configuraciones sensibles como variables de entorno
 # a través de Docker Compose, en lugar de hornear el .env en la imagen.
 # Por ahora lo copiaremos, pero tenlo en cuenta para mejorar.
 # COPY .env . 
+COPY . .
+
 # Si decides NO copiar el .env aquí, ASEGÚRATE de que todas las variables necesarias
 # (DATABASE_URL, VIDEO_DIRECTORY_PATH, BACKEND_PORT) se definan en la sección
 # 'environment' del servicio backend en docker-compose.yml.
@@ -58,4 +61,5 @@ EXPOSE 3001
 
 # Comando para ejecutar la aplicación cuando el contenedor se inicie.
 # Ejecuta el server.js compilado que está en la carpeta dist.
-CMD ["node", "dist/server.js"]
+# CMD ["node", "dist/server.js"]
+CMD [ "npm", "run", "dev" ]
