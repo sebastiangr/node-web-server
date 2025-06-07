@@ -68,7 +68,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-myvideouser}:${POSTGRES_PASSWORD:-mysecretpassword}@postgres_db:5432/${POSTGRES_DB:-videostreamerdb}
       VIDEO_DIRECTORY_PATH: /app/videos_mounted # Ruta DENTRO del contenedor donde están los vídeos
       # (Opcional) Host para que escuche en todas las interfaces dentro del contenedor
-      HOST: '0.0.0.0' 
+      HOST: '0.0.0.0'
+      TMDB_API_KEY: ${TMDB_API_KEY_DOCKER} # Define tu clave de API de TMDB aquí 
     restart: unless-stopped
     # (Opcional) Para desarrollo con hot-reloading dentro del contenedor:
     # Si montas tu código fuente con un volumen (como arriba con ./backend/src:/app/src),

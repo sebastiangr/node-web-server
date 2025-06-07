@@ -8,8 +8,9 @@
 CREATE TABLE IF NOT EXISTS videos (
     id SERIAL PRIMARY KEY,                      -- ID numérico autoincremental
     filename VARCHAR(255) NOT NULL UNIQUE,      -- Nombre del archivo, debe ser único
-    filepath TEXT NOT NULL,                     -- Ruta completa en el servidor donde el backend lo encuentra
+    filepath TEXT,                              -- Ruta DENTRO del contenedor donde el backend lo encuentra. Puede ser NULL si is_available = false
     size_bytes BIGINT,                          -- Tamaño en bytes
+    is_available BOOLEAN DEFAULT TRUE,          -- Indica si el archivo físico está presente y accesible
     
     -- Metadatos de ffprobe
     duration_seconds NUMERIC(10, 2),            -- Duración en segundos, con 2 decimales
@@ -35,8 +36,10 @@ CREATE TABLE IF NOT EXISTS videos (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- (Opcional) Crear un índice en filename para búsquedas más rápidas si no es la PK
--- CREATE INDEX IF NOT EXISTS idx_videos_filename ON videos (filename);
+-- Índices para mejorar el rendimiento de las búsquedas
+CREATE INDEX IF NOT EXISTS idx_videos_title ON videos (title);
+CREATE INDEX IF NOT EXISTS idx_videos_is_available ON videos (is_available);
+-- El índice UNIQUE en 'filename' ya se crea por la restricción UNIQUE.
 
 -- (Opcional) Crear una función para actualizar 'updated_at' automáticamente
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
@@ -47,8 +50,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- (Opcional) Crear un trigger para la tabla 'videos'
--- DROP TRIGGER IF EXISTS set_timestamp_videos ON videos; -- Descomentar si necesitas reemplazarlo
+-- Trigger para la tabla 'videos' para actualizar 'updated_at' en cada UPDATE
+-- Primero eliminamos el trigger si existe, para evitar errores al re-ejecutar el script
+DROP TRIGGER IF EXISTS set_timestamp_videos ON videos;
+-- Luego lo creamos
 CREATE TRIGGER set_timestamp_videos
 BEFORE UPDATE ON videos
 FOR EACH ROW
@@ -76,4 +81,5 @@ EXECUTE FUNCTION trigger_set_timestamp();
 \echo '*************************************'
 \echo 'Script db_init.sql ejecutado con éxito.'
 \echo 'Tabla "videos" creada/verificada.'
-\echo '*************************************'
+\echo 'Trigger "set_timestamp_videos" creado/verificado.'
+\echo '----------------------------------------------------'
