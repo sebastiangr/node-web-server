@@ -1,4 +1,3 @@
-// backend/src/services/tmdbService.ts
 import axios from 'axios';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
@@ -34,7 +33,7 @@ async function searchMovieOnTmdb(queryTitle: string, queryYear?: number): Promis
     if (queryYear) {
       params.year = queryYear; // o primary_release_year, TMDB es flexible aquí
     }
-    // console.log(`Buscando en TMDB: title="${queryTitle}", year=${queryYear}`);
+    console.log(`Buscando en TMDB: title="${queryTitle}", year=${queryYear}`);
     const response = await axios.get(`${TMDB_BASE_URL}/search/movie`, { params, timeout: 5000 });
 
     if (response.data && response.data.results && response.data.results.length > 0) {

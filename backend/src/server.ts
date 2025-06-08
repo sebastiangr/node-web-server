@@ -4,6 +4,8 @@ import cors from 'cors';
 import path from 'path';
 import { checkDbConnection } from './config/database'; 
 import videoRoutes from './routes/videoRoutes';
+import { Router } from 'express';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config();
 
@@ -21,6 +23,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Web-server: ¡Video Streamer API está funcionando! 🎥');
 });
 app.use('/api/videos', videoRoutes);
+app.use('/api/admin', adminRoutes); // Proteger esto más adelante
 
 // Manejador de errores global (simple)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

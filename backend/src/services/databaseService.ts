@@ -3,12 +3,30 @@ import { query } from '../config/database'; // Tu pool de conexión
 import { FfprobeMetadata } from './videoMetadataService';
 import { TmdbDetailedMovieInfo } from './tmdbService';
 
-export interface VideoRecord extends FfprobeMetadata, Partial<TmdbDetailedMovieInfo> {
-    id?: number; // Opcional porque al insertar no lo tenemos
-    filename: string;
-    filepath: string;
-    is_available: boolean;
-    // created_at, updated_at se manejan por DB o trigger
+export interface VideoRecord extends FfprobeMetadata {
+  id?: number; // Opcional porque al insertar no lo tenemos
+  filename: string;
+  filepath: string | null;
+  is_available: boolean;
+
+  // Campos de FfprobeMetadata
+  size_bytes?: number | null; // Permitir null si ffprobe falla
+  duration_seconds?: number | null; // Campo de la DB
+  width?: number | null;
+  height?: number | null;
+  codec_name?: string | null;
+  bit_rate?: number | null;
+  avg_frame_rate?: string | null;
+  display_aspect_ratio?: string | null;
+
+  // Campos de TmdbDetailedMovieInfo
+  title?: string | null;
+  release_year?: number | null; // Campo de la DB
+  director?: string | null;
+  overview?: string | null;
+  cover_image_url?: string | null; // URL del póster o carátula
+  tmdb_id?: string | null; // Si en la DB es VARCHAR
+  imdb_id?: string | null; // Si en la DB es VARCHAR
 }
 
 export async function upsertVideoInDb(videoData: VideoRecord): Promise<number | null> {

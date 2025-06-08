@@ -1,18 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
-import * as videoService from '../services/videoService';
+// import * as videoService from '../services/videoService';
+import * as databaseService from '../services/databaseService';
+import * as oldVideoService from '../services/videoService'; // Importa el servicio de videos antiguo
 import fs from 'fs';
 import path from 'path';
 
 export const getAllVideos = async (req: Request, res: Response, next: NextFunction): Promise<void> => { // Promise<void> porque es async
-  try {
-    const { search } = req.query;
-    let videos = await videoService.listVideos();
+  try {    
+    const { search, filter_available } = req.query; // filter_available puede ser 'true' o 'false'
+    let videos = await databaseService.getAllVideosFromDb();
 
-    if (search && typeof search === 'string') {
-      videos = videos.filter(video =>
-        video.filename.toLowerCase().includes(search.toLowerCase())
-      );
+    if (filter_available === 'true') {
+      videos = videos.filter(video => video.is_available);
+    } else if (filter_available === 'false') {
+      videos = videos.filter(video => !video.is_available);
     }
+    // No filtrar por defecto, mostrar todos
+    if (search && typeof search === 'string') {
+      const searchTerm = search.toLowerCase();
+      videos = videos.filter(video =>
+        (video.filename && video.filename.toLowerCase().includes(searchTerm)) ||
+        (video.title && video.title.toLowerCase().includes(searchTerm)) ||
+        (video.director && video.director.toLowerCase().includes(searchTerm))
+        // Podrías añadir búsqueda por año si es necesario
+      );
+    }        
     res.json(videos); // No necesitas 'return' aquí
   } catch (error) {
     next(error);
@@ -20,7 +32,7 @@ export const getAllVideos = async (req: Request, res: Response, next: NextFuncti
 };
 
 // Cambia el tipo de retorno a 'void'
-export const downloadVideo = (req: Request, res: Response, next: NextFunction): void => {
+export const downloadVideo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { filename } = req.params;
     if (!filename) {
@@ -33,19 +45,30 @@ export const downloadVideo = (req: Request, res: Response, next: NextFunction): 
       res.status(400).json({ message: "Nombre de archivo inválido." });
       return; // Añade un return explícito
     }
-    
-    const filePath = videoService.getVideoPath(filename);
 
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({ message: "Vídeo no encontrado." });
-      return; // Añade un return explícito
+    // Opcional: Verificar en DB si está disponible y obtener filepath
+    const videoRecords = await databaseService.getAllVideosFromDb(); // Podría ser más eficiente con un getByFilename
+    const videoInfo = videoRecords.find(v => v.filename === filename);    
+
+    if (!videoInfo || !videoInfo.is_available || !videoInfo.filepath) {
+      res.status(404).json({ message: "Vídeo no encontrado o no disponible." });
+      return;
+    }    
+    
+    // La ruta en videoInfo.filepath ya es la ruta dentro del contenedor
+    const filePath = videoInfo.filepath; 
+
+    if (!fs.existsSync(filePath)) { // Doble chequeo, por si acaso la DB y el disco están desincronizados
+      await databaseService.setVideoUnavailableInDb(filename); // Marcar como no disponible
+      res.status(404).json({ message: "Archivo de vídeo no encontrado en disco, actualizando estado." });
+      return;
     }
     
     res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
     // Opcional: Establecer Content-Type si lo conoces, aunque el navegador suele inferirlo.
     // const mimeType = 'video/mp4'; // O obténlo de alguna manera
     // res.setHeader('Content-Type', mimeType);
-    
+        
     const fileStream = fs.createReadStream(filePath);
 
     // Es importante manejar errores del stream aquí también

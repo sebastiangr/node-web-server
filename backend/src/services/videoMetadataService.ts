@@ -1,17 +1,16 @@
-// backend/src/services/videoMetadataService.ts
 import fs from 'fs/promises';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg'; // Asumo que ya lo tienes
 
 export interface FfprobeMetadata {
-  duration?: number; // Duración en segundos
-  width?: number;
-  height?: number;
-  codec_name?: string;
-  bit_rate?: number;
-  avg_frame_rate?: string;
-  display_aspect_ratio?: string;
-  size_bytes?: number; // Añadido para tenerlo junto
+  duration?: number | null; // Duración en segundos
+  width?: number | null;
+  height?: number | null;
+  codec_name?: string | null;
+  bit_rate?: number | null;
+  avg_frame_rate?: string | null;
+  display_aspect_ratio?: string | null;
+  size_bytes?: number | null; // Añadido para tenerlo junto
 }
 
 export const getFfprobeMetadata = async (filePath: string): Promise<FfprobeMetadata> => {

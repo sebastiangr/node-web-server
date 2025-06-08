@@ -1,8 +1,7 @@
-// backend/src/services/syncService.ts
 import fs from 'fs/promises';
 import path from 'path';
 import { getFfprobeMetadata, parseFilenameForTitleAndYear } from './videoMetadataService';
-import { getTmdbDetails } from './tmdbService';
+import { getTmdbDetails, TmdbDetailedMovieInfo } from './tmdbService';
 import { upsertVideoInDb, getAllVideosFromDb, setVideoUnavailableInDb, VideoRecord } from './databaseService';
 
 const VIDEO_DIR = process.env.VIDEO_DIRECTORY_PATH; // Esta es /app/videos_mounted en Docker
@@ -12,8 +11,10 @@ async function processSingleVideoFile(filename: string, fullFilepathOnDisk: stri
   console.log(`Procesando: ${filename}`);
   const ffprobeMeta = await getFfprobeMetadata(fullFilepathOnDisk);
 
-  let tmdbMeta = null;
+  let tmdbMeta: TmdbDetailedMovieInfo | null = null; 
+
   const { title: parsedTitle, year: parsedYear } = parseFilenameForTitleAndYear(filename);
+
   if (parsedTitle) {
     console.log(`   Título parseado: "${parsedTitle}", Año: ${parsedYear || 'N/A'}`);
     tmdbMeta = await getTmdbDetails(parsedTitle, parsedYear);
@@ -31,7 +32,7 @@ async function processSingleVideoFile(filename: string, fullFilepathOnDisk: stri
     filepath: fullFilepathOnDisk, // Ruta que el backend usa para acceder (dentro del contenedor)
     is_available: true,
     size_bytes: ffprobeMeta.size_bytes,
-    duration: ffprobeMeta.duration, // Asegúrate que el nombre coincida con el de la DB (duration_seconds)
+    duration_seconds: ffprobeMeta.duration, // Asegúrate que el nombre coincida con el de la DB (duration_seconds)
     width: ffprobeMeta.width,
     height: ffprobeMeta.height,
     codec_name: ffprobeMeta.codec_name,
